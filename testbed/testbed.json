@@ -1,0 +1,64 @@
+{
+    "ports": [
+        {
+            "port": 1,
+            "capacity": 40,
+            "comment": "e291427x1300275 Netronome"
+        },
+        {
+            "port": 2,
+            "capacity": 40,
+            "comment": "e291427x1300275 Netronome"
+        },
+        {
+            "port": 3,
+            "capacity": 40,
+            "comment": "e291427x1300274 Netronome"
+        },
+        {
+            "port": 4,
+            "capacity": 40,
+            "comment": "e291427x1300274 Netronome"
+        },
+        {
+            "port": 5,
+            "capacity": 100,
+            "comment": "e291427x1300275 E810"
+        },
+        {
+            "port": 6,
+            "capacity": 100,
+            "comment": "e291427x1300275 E810"
+        },
+        {
+            "port": 7,
+            "capacity": 100,
+            "comment": "e291427x1300274 Alveo"
+        },
+        {
+            "port": 8,
+            "capacity": 100,
+            "comment": "e291427x1300274 Alveo"
+        },
+        {
+            "port": 9,
+            "capacity": 40,
+            "comment": "e291427x1300275 NetFPGA"
+        },
+        {
+            "port": 10,
+            "capacity": 100,
+            "comment": "e291427x1300274 E810"
+        },
+        {
+            "port": 11,
+            "capacity": 100,
+            "comment": "e291427x1300274 E810"
+        },
+        {
+            "port": 32,
+            "capacity": 100,
+            "comment": "Tofino 0"
+        }
+    ]
+}
