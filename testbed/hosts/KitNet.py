@@ -3,7 +3,6 @@
 from .Host import Host
 
 import time
-import os
 
 KITNET_EXE_NAME  = 'python' # oof
 

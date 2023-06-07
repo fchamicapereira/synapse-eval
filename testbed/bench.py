@@ -5,10 +5,10 @@ from hosts.Dispatcher import Dispatcher
 from hosts.KitNet import KitNet
 from hosts.TG_DPDK import TG_DPDK
 
-import util
-import hosts
 import os
 import argparse
+
+from . import util
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 VERBOSE    = False

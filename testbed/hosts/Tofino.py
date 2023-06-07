@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 from .Host import Host
+from .Dispatcher import Dispatcher
+from .KitNet import KitNet
+from .TG_kernel import TG_kernel
 
 import time
-import os
 
 CONTROLLER_EXE_NAME    = 'peregrine-controller'
 

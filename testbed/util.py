@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import shutil
 import json
 
 SCRIPT_DIR   = os.path.dirname(os.path.realpath(__file__))

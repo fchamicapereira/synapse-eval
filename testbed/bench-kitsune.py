@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import util
-import hosts
 import os
 import argparse
 import subprocess
 import statistics
+
+from . import util
 
 SCRIPT_DIR           = os.path.dirname(os.path.realpath(__file__))
 TEST_RESULTS_DIR     = f'{SCRIPT_DIR}/results/kitsune'

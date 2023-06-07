@@ -2,9 +2,6 @@
 
 from .Host import Host
 
-import time
-import os
-
 BIND_DPDK_SCRIPT = '/home/fcp/bind-igb_uio.sh'
 PKTGEN_DIR       = '/opt/Pktgen-DPDK'
 PKTGEN_EXE_NAME  = 'pktgen'

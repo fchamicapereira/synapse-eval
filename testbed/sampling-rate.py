@@ -5,13 +5,12 @@ from hosts.Dispatcher import Dispatcher
 from hosts.KitNet import KitNet
 from hosts.TG_DPDK import TG_DPDK
 
-import util
-import hosts
 import os
 import argparse
 import glob
 
-import numpy as np
+from . import util
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 

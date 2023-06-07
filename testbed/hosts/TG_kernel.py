@@ -2,9 +2,6 @@
 
 from .Host import Host
 
-import time
-import os
-
 BIND_KERNEL_SCRIPT = '/home/fcp/bind-e810-kernel.sh'
 
 class TG_kernel(Host):

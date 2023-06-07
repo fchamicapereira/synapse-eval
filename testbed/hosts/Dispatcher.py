@@ -3,7 +3,6 @@
 from .Host import Host
 
 import time
-import os
 
 DISPATCHER_EXE_NAME    = 'dispatcher'
 
