@@ -91,6 +91,15 @@ def get_processed_samples_from_dispatcher(dispatcher_report_file):
 		samples = lines[1:]
 		return len(samples)
 
+def get_tick_data(tick_file):
+	data = []
+	with open(tick_file, 'r') as f:
+		lines = f.readlines()
+
+	for line in lines[1:]:
+		line = [int(i) for i in line.split(',')]
+		data.append(line)
+
 def run(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, rate):
 	controller_report_file = None
 	dispatcher_report_file = None
@@ -103,6 +112,7 @@ def run(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, rate):
 
 	success = False
 	try_run = 0
+	tick_data = []
 	while not success:
 		try_run += 1
 
@@ -130,9 +140,11 @@ def run(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, rate):
 		kitnet.stop()
 
 		controller_report_file = tofino.get_report()
+		controller_tick_file = tofino.get_tick()
 		dispatcher_report_file = dispatcher.get_report()
 
 		rx_bytes,rx_pkts,tx_samples = get_data_from_controller(controller_report_file)
+		tick_data = get_tick_data(controller_tick_file)
 
 		processed = get_processed_samples_from_dispatcher(dispatcher_report_file)
 		loss      = abs(tx_samples - processed) / tx_samples
@@ -154,7 +166,7 @@ def run(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, rate):
 	rx_rate_bps = int((rx_bytes * 8) / DURATION_SECONDS)
 	tx_rate_pps = int(tx_samples / DURATION_SECONDS)
 
-	return rx_rate_bps, rx_rate_pps, tx_rate_pps, loss
+	return rx_rate_bps, rx_rate_pps, tx_rate_pps, loss, tick_data
 
 def find_stable_throughput(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, verbose=True):
 	upper_bound = 100.0
@@ -177,7 +189,8 @@ def find_stable_throughput(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, v
 		if rate < RATE_LOWER_THRESHOLD or i >= SEARCH_ITERATIONS:
 			break
 		
-		rx_rate_bps, rx_rate_pps, tx_rate_pps, loss = run(tofino, dispatcher, kitnet, tg_dpdk, testbed, test, rate)
+		rx_rate_bps, rx_rate_pps, tx_rate_pps, loss, _ = run(
+			tofino, dispatcher, kitnet, tg_dpdk, testbed, test, rate)
 
 		if verbose:
 			msg  = '  '

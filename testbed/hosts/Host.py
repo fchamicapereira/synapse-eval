@@ -7,6 +7,9 @@ class Host:
 		self.name = name
 		self.hostname = hostname
 		self.verbose = verbose
+		self._nb_cores = None
+		self._clk_tck = None
+
 		self.test_connection()
 
 	def exec(self, cmd, path=None, silence=False, background=False,
@@ -98,6 +101,54 @@ class Host:
 		code, _, _ = self.exec(cmd, silence=True, must_succeed=False)
 		return code == 0
 	
+	@property
+	def clk_tck(self):
+		if self._clk_tck is None:
+			cmd = 'getconf CLK_TCK'
+			ret, stdout, _ = self.exec(cmd, silence=True, capture_output=True)
+
+			if ret != 0:
+				self.log('failed to get CLK_TCK value')
+				exit(1)
+
+			assert(stdout is not None)
+			self._clk_tck = int(stdout)
+
+		return self._clk_tck
+	
+	@property
+	def nb_cores(self):
+		if self._nb_cores is None:
+			cmd = 'nproc --all'
+			ret, stdout, _ = self.exec(cmd, silence=True, capture_output=True)
+
+			if ret != 0:
+				self.log('failed to get number of cores')
+				exit(1)
+
+			assert(stdout is not None)
+			self._nb_cores = int(stdout)
+
+		return self._nb_cores
+	
+	def get_cpu_ticks(self, core_id=None):
+		if core_id is None:
+			cpu_str = 'cpu '
+		else:
+			cpu_str = f'cpu{core_id} '
+
+		cmd = f'cat /proc/stat | grep "{cpu_str}"'
+		_, stdout, _ = self.exec(cmd, silence=True, capture_output=True)
+
+		if stdout is None:
+			self.log('failed to get CPU time')
+			exit(1)
+
+		cpu_ticks = stdout.split()[1:]
+		cpu_ticks = sum(int(t) for t in cpu_ticks)
+
+		return cpu_ticks
+
 	def kill(self, program_name):
 		cmd = f'sudo killall {program_name} || true'
 		self.exec(cmd, silence=True, must_succeed=False)
