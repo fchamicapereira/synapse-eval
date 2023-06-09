@@ -32,9 +32,9 @@ NFs = {
 }
 
 HEURISTICS = {
-    "max_tpt": "Max Tpt.",
-    "max_cpt": "Max Comp.",
-    "min_cpu": "Min CPU",
+    "max_tpt": "Max. Tpt.",
+    "max_cpt": "Max. Comp.",
+    "min_cpu": "Min. CPU",
 }
 
 acm_acmsmall = {
