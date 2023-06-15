@@ -189,7 +189,7 @@ if __name__ == "__main__":
 	parser.add_argument('--churn', type=int, required=True,
 						help='churn in fpm (>= 1)')
 	
-	parser.add_argument('--rate', type=int, required=True, default=100,
+	parser.add_argument('--rate', type=float, required=True, default=100,
 						help='rate in Gbps')
 
 	parser.add_argument('--size', type=int, required=True,
@@ -211,7 +211,8 @@ if __name__ == "__main__":
 	epoch_pkts          = get_pkts_in_epoch(exp_time_sec, args.size, args.rate)
 	epoch_flows         = utils.create_n_unique_flows(epoch_pkts, args.private_only, args.internet_only)
 	epochs, report      = get_required_number_of_epochs(exp_time_sec, args.churn, args.size, args.rate)
-	epochs_flows, churn = get_epochs_flows(epoch_flows, args.churn, epochs, exp_time_sec, args.private_only, args.internet_only)
+	epochs_flows, churn = get_epochs_flows(
+		epoch_flows, args.churn, epochs, exp_time_sec, args.private_only, args.internet_only)
 
 	output_fname = f'churn_{churn}_fpm_{args.size}B_{args.expiration}us_{args.rate}_Gbps.pcap'
 	report_fname = f'churn_{churn}_fpm_{args.size}B_{args.expiration}us_{args.rate}_Gbps.dat'
