@@ -214,8 +214,10 @@ if __name__ == "__main__":
 	epochs_flows, churn = get_epochs_flows(
 		epoch_flows, args.churn, epochs, exp_time_sec, args.private_only, args.internet_only)
 
-	output_fname = f'churn_{churn}_fpm_{args.size}B_{args.expiration}us_{args.rate}_Gbps.pcap'
-	report_fname = f'churn_{churn}_fpm_{args.size}B_{args.expiration}us_{args.rate}_Gbps.dat'
+	rate_str = int(args.rate) if int(args.rate) == args.rate else str(args.rate).replace('.','_')
+
+	output_fname = f'churn_{churn}_fpm_{args.size}B_{args.expiration}us_{rate_str}_Gbps.pcap'
+	report_fname = f'churn_{churn}_fpm_{args.size}B_{args.expiration}us_{rate_str}_Gbps.dat'
 
 	print()
 	print(f"Out:    {output_fname}")
