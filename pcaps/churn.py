@@ -19,9 +19,10 @@ MIN_PKT_SIZE_BYTES = 64
 MAX_PKT_SIZE_BYTES = 1514
 
 def get_pkts_in_time(t_sec, pkt_sz_bytes, rate_gbps):
-	IPG          = 24
+	IPG          = 20
+	CRC          = 4
 	rate_bps     = rate_gbps * 1e9
-	pkts         = int(rate_bps * t_sec / ((pkt_sz_bytes + IPG) * 8))
+	pkts         = int(rate_bps * t_sec / ((pkt_sz_bytes + IPG + CRC) * 8))
 	assert pkts > 0
 	return pkts
 
