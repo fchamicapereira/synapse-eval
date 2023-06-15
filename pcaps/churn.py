@@ -222,9 +222,11 @@ def generate_pkts(pcap, epochs_flows, size):
 			pkt = pkt/IP(src=flow["src_ip"], dst=flow["dst_ip"])
 			pkt = pkt/UDP(sport=flow["src_port"], dport=flow["dst_port"])
 
-			if len(pkt) - 14 < size:
-				payload = "\x00" * (size - len(pkt))
-				pkt = pkt/payload
+			crc_size      = 4
+			overhead      = len(pkt) + crc_size
+			payload_size  = size - overhead
+			payload       = "\x00" * payload_size
+			pkt          /= payload
 
 			pktdump.write(pkt)
 
