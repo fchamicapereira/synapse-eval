@@ -6,7 +6,7 @@ import sys
 
 from itertools import cycle
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
