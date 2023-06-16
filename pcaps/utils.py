@@ -5,6 +5,8 @@ from random import randint, sample
 from scapy.all import *
 from scapy.utils import PcapWriter
 
+VT100_ERASE_LINE = "\33[2K\r"
+
 def random_mac(blacklist=[]):
 	mac = None
 	while not mac or mac in blacklist:
@@ -137,7 +139,5 @@ def create_n_unique_flows(nflows, private_only, internet_only, flows_exception=[
 		if flow_id not in flows_set and flow not in flows_exception:
 			flows.append(flow)
 			flows_set.add(flow_id)
-		print(f"\rUnique flows: {len(flows):,}/{nflows:,}", end='')
-	print()
 	
 	return flows
