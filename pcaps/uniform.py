@@ -29,8 +29,11 @@ def generate_pkts(data):
 	pktdump = PcapWriter(generated_pcap, append=False)
 	n_pkts = len(flows)
 
+	src_mac = utils.random_mac()
+	dst_mac = utils.random_mac()
+
 	for i, flow in enumerate(flows):
-		pkt = Ether(src=flow["src_mac"], dst=flow["dst_mac"])
+		pkt = Ether(src=src_mac, dst=dst_mac)
 		pkt = pkt/IP(src=flow["src_ip"], dst=flow["dst_ip"])
 		pkt = pkt/UDP(sport=flow["src_port"], dport=flow["dst_port"])
 

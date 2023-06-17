@@ -114,12 +114,7 @@ def get_flow_id(flow):
         """.replace(" ", "").replace("\n", "")
 
 def create_flow(private_only, internet_only):
-	src_mac = random_mac()
-	dst_mac = random_mac()
-
 	flow = {
-		"src_mac":  src_mac,
-		"dst_mac":  dst_mac,
 		"src_ip":   random_ip(private_only=private_only, internet_only=internet_only),
 		"dst_ip":   random_ip(private_only=private_only, internet_only=internet_only),
 		"src_port": random_port(),

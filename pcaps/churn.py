@@ -170,6 +170,9 @@ def generate_pkts(pcap_name, epochs_flows, size):
 	total_pkts  = sum([ len(ef) for ef in epochs_flows ])
 	generated   = 0
 	encoded     = {}
+	
+	src_mac     = utils.random_mac()
+	dst_mac     = utils.random_mac()
 
 	# Bypassing scapy's awfully slow wrpcap, have to use raw packets as input
 	# To get a raw packet from a scapy packet use `bytes_encode(pkt)`.
@@ -181,7 +184,7 @@ def generate_pkts(pcap_name, epochs_flows, size):
 				if flow_id in encoded:
 					raw_pkt = encoded[flow_id]
 				else:
-					pkt = Ether(src=flow["src_mac"], dst=flow["dst_mac"])
+					pkt = Ether(src=src_mac, dst=dst_mac)
 					pkt = pkt/IP(src=flow["src_ip"], dst=flow["dst_ip"])
 					pkt = pkt/UDP(sport=flow["src_port"], dport=flow["dst_port"])
 
