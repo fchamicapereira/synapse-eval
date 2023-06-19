@@ -1,0 +1,45 @@
+# Set the hostnames of the machines you want to use. These must match entries in
+# your ssh config file. You should also ensure that these entries are configured
+# to use an IdentityFile pointing to an ssh key without password. Note that SSH
+# Agent is not supported.
+#
+# Example of an .ssh/config file entry defining the host named `host_a`:
+#
+# Host host_a
+#    HostName host1.example.com
+#    User user
+#    IdentityFile ~/.ssh/id_rsa
+#
+[hosts]
+controller = ""
+pktgen = ""
+
+
+# Set the paths where to copy the source code on both the controller and the
+# pktgen machines.
+# Ensure that the user you are using to ssh into the machines has write access
+# to these directories. This user is set in the .ssh/config file (see above).
+[paths]
+controller_path = ""
+pktgen_path = ""
+pcap_path = ""
+
+
+[devices.controller]
+
+
+[devices.pktgen]
+rx_dev = ""
+rt_dev = ""
+tx_line_rate =  # in Gbps.
+
+
+[logs]
+# Log files. They will be saved in the orchestrator machine in the same
+# directory where you run the experiment.py script.
+controller_log = "controller.log"
+pktgen_log = "pktgen.log"
+
+
+[extra]
+dpdk_mem_channels = 4

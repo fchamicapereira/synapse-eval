@@ -1,4 +1,8 @@
 __pycache__
 env
+.venv
 *.pcap
 *.dat
+
+# Should not commit the setup config file.
+experiment_config.toml
