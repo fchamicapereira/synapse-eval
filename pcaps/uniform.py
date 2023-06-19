@@ -20,34 +20,35 @@ from collections import Counter
 
 import utils
 
-def generate_pkts(data):
-	id = data[0]
-	generated_pcap = data[1]
-	flows = data[2]
-	size = data[3]
-
-	pktdump = PcapWriter(generated_pcap, append=False)
+def generate_pkts(pcap_name, flows, size):
+	pktdump = PcapWriter(pcap_name, append=False)
 	n_pkts = len(flows)
 
 	src_mac = utils.random_mac()
 	dst_mac = utils.random_mac()
 
-	for i, flow in enumerate(flows):
-		pkt = Ether(src=src_mac, dst=dst_mac)
-		pkt = pkt/IP(src=flow["src_ip"], dst=flow["dst_ip"])
-		pkt = pkt/UDP(sport=flow["src_port"], dport=flow["dst_port"])
+	# Bypassing scapy's awfully slow wrpcap, have to use raw packets as input
+	# To get a raw packet from a scapy packet use `bytes_encode(pkt)`.
+	with PcapWriter(pcap_name, linktype=DLT_EN10MB) as pkt_wr:
+		for i, flow in enumerate(flows):
+			pkt = Ether(src=src_mac, dst=dst_mac)
+			pkt = pkt/IP(src=flow["src_ip"], dst=flow["dst_ip"])
+			pkt = pkt/UDP(sport=flow["src_port"], dport=flow["dst_port"])
 
-		crc_size      = 4
-		overhead      = len(pkt) + crc_size
-		payload_size  = size - overhead
-		payload       = "\x00" * payload_size
-		pkt          /= payload
+			crc_size      = 4
+			overhead      = len(pkt) + crc_size
+			payload_size  = size - overhead
+			payload       = "\x00" * payload_size
+			pkt          /= payload
 
-		pktdump.write(pkt)
+			raw_pkt       = bytes_encode(pkt)
 
-		if id == 0:
+			if not pkt_wr.header_present:
+				pkt_wr._write_header(raw_pkt)
+			pkt_wr._write_packet(raw_pkt)
+
 			print(f"\r[*] Generating packets ({100 * (i+1) / n_pkts:3.2f} %) ...", end=" ")
-	if id == 0: print(" done")
+		print(" done")
 
 if __name__ == "__main__":
 	start_time = time.time()
@@ -78,24 +79,7 @@ if __name__ == "__main__":
 	chunks_sz = int(args.flows / cores)
 
 	flows = utils.create_n_unique_flows(args.flows, args.private_only, args.internet_only)
-
-	print(f"[*] Using {cores} cores ({int(args.flows / cores)} pkts/core)")
-	pool = Pool(cores)
-
-	data = []
-	generated_pcaps = []
-	
-	for id, x in enumerate(range(0, args.flows, chunks_sz)):
-		generated_pcap = f"{output_dir}/.{output_filename}.{id}"
-		chunk = flows[x:x+chunks_sz]
-
-		generated_pcaps.append(generated_pcap)
-		data.append((id, generated_pcap, chunk, args.size))
-
-	pool.map(generate_pkts, data)
-
-	call([ "mergecap", "-F", "pcap", "-w", f"{args.output}" ] + generated_pcaps)
-	call([ "rm" ] + generated_pcaps)
+	generate_pkts(args.output, flows, args.size)
 
 	elapsed = time.time() - start_time
 	hr_elapsed = timedelta(seconds=elapsed)
