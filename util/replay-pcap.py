@@ -20,8 +20,8 @@ MAX_RATE             = 100 # Gbps
 LOSS_THRESHOLD       = 0.1 # %
 CHECKING_ERROR       = 0.1 # relative error
 
-DEFAULT_TX_CORES     = 2
-DEFAULT_RX_CORES     = 2
+DEFAULT_TX_CORES     = 4
+DEFAULT_RX_CORES     = 4
 DEFAULT_DURATION_SEC = 10 # seconds
 DEFAULT_ITERATIONS   = 10
 
