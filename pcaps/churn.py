@@ -3,7 +3,7 @@
 import argparse
 import time
 
-from random import randint, sample
+from random import randint, sample, shuffle
 from datetime import timedelta
 
 from scapy.all import *
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import utils
 
-EPOCHS_IN_EXP_TIME = 10
+EPOCHS_IN_EXP_TIME = 1
 MIN_EPOCHS         = 4 * EPOCHS_IN_EXP_TIME
 MIN_PKT_SIZE_BYTES = 64
 MAX_PKT_SIZE_BYTES = 1514
@@ -43,8 +43,8 @@ def get_pkts_in_epoch(exp_time_sec, pkt_sz_bytes, rate_gbps):
 	epoch_pkts     = get_pkts_in_time(epoch_time_sec, pkt_sz_bytes, rate_gbps)
 	return epoch_pkts
 
-def churn_from_modified_flows(modified_flows, epochs, epoch_time_sec):
-	churn_fps  = modified_flows / (epochs * epoch_time_sec)
+def churn_from_modified_flows(foreground_flows, epochs, epoch_time_sec):
+	churn_fps  = foreground_flows / (epochs * epoch_time_sec)
 	churn_fpm  = 60 * churn_fps
 	return int(churn_fpm)
 
@@ -53,15 +53,15 @@ def print_report(data):
 	s += f"Min churn         {data['min_churn']:,} fpm\n"
 	s += f"Max churn         {data['max_churn']:,} fpm\n"
 	s += f"Packet size       {data['pkt_sz']} bytes\n"
-	s += f"Epochs            {data['epochs']}\n"
-	s += f"Packets expired   {data['exp_pkts']}\n"
-	s += f"Packets per epoch {data['pkts_epochs']}\n"
+	s += f"Epochs            {data['epochs']:,}\n"
+	s += f"Packets expired   {data['exp_pkts']:,}\n"
+	s += f"Packets per epoch {data['pkts_epochs']:,}\n"
 	s += f"Min rate          {data['min_rate']:.2f} Gbps\n"
 	s += f"Target rate       {data['target_rate']:.2f} Gbps\n"
 	s += f"Pcap size         {data['pcap_sz']:,} bytes\n"
-	s += f"Background flows  {data['background_flows']}\n"
-	s += f"Modified flows    {data['modified_flows']}\n"
-	s += f"Total flows       {data['total_flows']}\n"
+	s += f"Background flows  {data['background_flows']:,}\n"
+	s += f"Foreground flows  {data['foreground_flows']:,}\n"
+	s += f"Total flows       {data['total_flows']:,}\n"
 
 	print(s)
 
@@ -77,7 +77,7 @@ def save_report(data, report_filename):
 	s += f"Target rate       {data['target_rate']:.2f} Gbps\n"
 	s += f"Pcap size         {data['pcap_sz']:,} bytes\n"
 	s += f"Background flows  {data['background_flows']}\n"
-	s += f"Modified flows    {data['modified_flows']}\n"
+	s += f"Foreground flows  {data['foreground_flows']}\n"
 	s += f"Total flows       {data['total_flows']}\n"
 
 	with open(report_filename, 'w') as f:
@@ -104,8 +104,6 @@ def get_required_number_of_epochs(exp_time_sec, churn_fpm, pkt_sz_bytes, rate_gb
 
 		assert max_churn_fpm >= min_churn_fpm
 
-	min_rate_gbps = 1e-9 * epoch_pkts * MIN_PKT_SIZE_BYTES * 8 / exp_time_sec
-
 	report_data = {
 		'min_churn':   min_churn_fpm,
 		'max_churn':   max_churn_fpm,
@@ -113,15 +111,13 @@ def get_required_number_of_epochs(exp_time_sec, churn_fpm, pkt_sz_bytes, rate_gb
 		'epochs':      epochs,
 		'exp_pkts':    exp_tx_pkts,
 		'pkts_epochs': epoch_pkts,
-		'min_rate':    min_rate_gbps,
 		'target_rate': rate_gbps,
 		'pcap_sz':     epochs * epoch_pkts * pkt_sz_bytes,
 	}
 
-
 	return epochs, report_data
 
-def get_epochs_flows(epoch_flows, churn_fpm, epochs, exp_time_sec, max_flows, private_only, internet_only, report):
+def get_epochs_flows(churn_fpm, epochs, exp_time_sec, n_epoch_pkts, total_flows, private_only, internet_only, report):
 	epoch_time_sec = get_epoch_time(exp_time_sec)
 
 	assert epochs % 2 == 0
@@ -134,28 +130,44 @@ def get_epochs_flows(epoch_flows, churn_fpm, epochs, exp_time_sec, max_flows, pr
 		current_churn_fpm = churn_from_modified_flows(n_modified_flows, epochs, epoch_time_sec)
 
 	assert n_modified_flows > 0 or churn_fpm == 0
-	assert n_modified_flows <= len(epoch_flows)
+	assert n_modified_flows <= n_epoch_pkts
 
-	if max_flows > 0:
-		total_flows = min(len(epoch_flows) + n_modified_flows, max_flows)
-	else:
-		total_flows = len(epoch_flows) + n_modified_flows
+	if total_flows == -1:
+		total_flows = n_modified_flows
 
-	n_epoch_flows  = total_flows - n_modified_flows
-	epoch_flows    = epoch_flows[:n_epoch_flows]
+	if not (n_modified_flows <= total_flows <= n_epoch_pkts):
+		print(f'Error: not enough flows')
+		print(f'Requested {total_flows} total flows')
+		print(f'Epoch flows: {n_epoch_pkts}')
+		print(f'Foreground flows: {n_modified_flows}')
+		print(f'Failed condition: foreground <= total <= epoch packets')
+		exit(1)
 
-	report['background_flows'] = n_epoch_flows
-	report['modified_flows']   = n_modified_flows
+	n_background_flows = total_flows - n_modified_flows
+	n_padding_flows    = n_epoch_pkts - n_modified_flows - n_background_flows
+	min_rate_gbps      = 1e-9 * n_modified_flows * (MIN_PKT_SIZE_BYTES*8) / exp_time_sec
+
+	report['min_rate']         = min_rate_gbps
+	report['background_flows'] = n_background_flows
+	report['foreground_flows'] = n_modified_flows
 	report['total_flows']      = total_flows
 
-	modified_flows = sample(epoch_flows, n_modified_flows)
-	new_flows      = utils.create_n_unique_flows(n_modified_flows, private_only, internet_only, epoch_flows)
-	translation    = {}
+	old_flows        = utils.create_n_unique_flows(n_modified_flows, private_only, internet_only)
+	new_flows        = utils.create_n_unique_flows(n_modified_flows, private_only, internet_only, old_flows)
+	background_flows = utils.create_n_unique_flows(n_background_flows, private_only, internet_only, old_flows + new_flows)
+	padding_flows    = [ f for f in old_flows for _ in range(int(n_padding_flows/n_modified_flows) + 1) ]
+	padding_flows    = padding_flows[:n_padding_flows]
+	translation      = {}
 
-	for old_flow, new_flow in zip(modified_flows, new_flows):
+	shuffle(padding_flows)
+
+	assert len(old_flows) + len(background_flows) + len(padding_flows) == n_epoch_pkts
+
+	for old_flow, new_flow in zip(old_flows, new_flows):
 		translation[utils.get_flow_id(old_flow)] = new_flow
 
-	epochs_flows = [ list(epoch_flows) for _ in range(epochs) ]
+	# list() for doing a deep copy
+	epochs_flows = [ list(old_flows + background_flows + padding_flows) for _ in range(epochs) ]
 	
 	for epoch in range(int(epochs/2), epochs, 1):
 		flows = epochs_flows[epoch]
@@ -223,8 +235,8 @@ if __name__ == "__main__":
 	parser.add_argument('--size', type=int, required=True,
 						help=f'packet size ([{MIN_PKT_SIZE_BYTES},{MAX_PKT_SIZE_BYTES}])')
 	
-	parser.add_argument('--max-flows', type=int, default=-1,
-						help=f'max number of flows (background+new)')
+	parser.add_argument('--total-flows', type=int, default=-1,
+						help=f'total number of flows (background + foreground)')
 
 	parser.add_argument('--private-only', action='store_true', required=False,
 						help='generate only flows on private networks')
@@ -240,11 +252,10 @@ if __name__ == "__main__":
 
 	exp_time_sec        = args.expiration * 1e-6
 	epoch_pkts          = get_pkts_in_epoch(exp_time_sec, args.size, args.rate)
-	epoch_flows         = utils.create_n_unique_flows(epoch_pkts, args.private_only, args.internet_only)
 	epochs, report      = get_required_number_of_epochs(exp_time_sec, args.churn, args.size, args.rate)
 	epochs_flows, churn = get_epochs_flows(
-		epoch_flows, args.churn, epochs, exp_time_sec,
-		args.max_flows, args.private_only, args.internet_only, report)
+		args.churn, epochs, exp_time_sec, epoch_pkts, args.total_flows,
+		args.private_only, args.internet_only, report)
 
 	rate_str = int(args.rate) if int(args.rate) == args.rate else str(args.rate).replace('.','_')
 

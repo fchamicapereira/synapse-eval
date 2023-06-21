@@ -454,7 +454,9 @@ def main():
 	parser.add_argument('tx', type=str, help='TX PCIe device')
 	parser.add_argument('rx', type=str, help='RX PCIe device')
 	parser.add_argument('pcap', type=str, help='pcap to replay')
-	parser.add_argument('rate', type=range_limited_rate, help='replay rate (%% of total capacity)')
+
+	parser.add_argument('--rate', required=False, type=range_limited_rate,
+		default=100, help='replay rate (%% of total capacity, default 100%%)')
 
 	parser.add_argument('--tx-cores',
 		type=int, default=DEFAULT_TX_CORES, required=False, help='Number of TX cores')
