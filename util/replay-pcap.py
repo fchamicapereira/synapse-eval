@@ -396,7 +396,7 @@ def get_cfg(tx_pcie_dev, rx_pcie_dev, num_tx_cores, num_rx_cores):
 	all_rx_cores  = get_pcie_dev_cpus(rx_pcie_dev)
 
 	tx_cores      = select_cores(all_tx_cores, num_tx_cores + 1, [])
-	rx_cores      = select_cores(all_tx_cores, num_rx_cores + 1, tx_cores)
+	rx_cores      = select_cores(all_rx_cores, num_rx_cores + 1, tx_cores)
 	master_core   = select_cores(all_cores, 1, tx_cores + rx_cores)
 
 	tx_rx_cores = [ tx_cores[0] ]
